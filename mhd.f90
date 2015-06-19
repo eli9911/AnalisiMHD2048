@@ -676,12 +676,12 @@
  !-----------------------------------------------
  ! M=8
 
- allocate(p_vxM8(30), w_vxM8(30))
+ allocate(p_vxM8(10), w_vxM8(10))
 
- call  pdf_coeff(8, 30, coeff_fvx, w_vxM8, p_vxM8, dev_standard_vx(8), media_vxM8)
+ call  pdf_coeff(8, 10, coeff_fvx, w_vxM8, p_vxM8, dev_standard_vx(8), media_vxM8)
 
  open(unit=4444, status='unknown', file='pdf_vxM8.dat', recl=100000)
- do i=1,30
+ do i=1,10
       write(4444,*), (w_vxM8(i)-media_vxM8)/dev_standard_vx(8), p_vxM8(i),  w_vxM8(i)/dev_standard_vx(8)
  enddo
  close(4444)
@@ -705,12 +705,12 @@
  !----------------------------------------------
  !M=7
   
- allocate(p_vxM7(40), w_vxM7(40))
+ allocate(p_vxM7(10), w_vxM7(10))
  
- call  pdf_coeff(7, 40, coeff_fvx, w_vxM7, p_vxM7, dev_standard_vx(7), media_vxM7) 
+ call  pdf_coeff(7, 10, coeff_fvx, w_vxM7, p_vxM7, dev_standard_vx(7), media_vxM7) 
  
  open(unit=4740, status='unknown', file='pdf_vxM7.dat', recl=100000)
- do i=1,40
+ do i=1,10
       write(4740,*), (w_vxM7(i)- media_vxM7)/dev_standard_vx(7), p_vxM7(i),  w_vxM7(i)/dev_standard_vx(7)
  enddo
  close(4740)
@@ -718,12 +718,12 @@
  !----------------------------------------------
  !M=6
   
- allocate(p_vxM6(60), w_vxM6(60))
+ allocate(p_vxM6(26), w_vxM6(26))
  
- call  pdf_coeff(6, 60, coeff_fvx, w_vxM6, p_vxM6, dev_standard_vx(6), media_vxM6) 
+ call  pdf_coeff(6, 26, coeff_fvx, w_vxM6, p_vxM6, dev_standard_vx(6), media_vxM6) 
  
  open(unit=4640, status='unknown', file='pdf_vxM6.dat', recl=100000)
- do i=1,60
+ do i=1,26
       write(4640,*), (w_vxM6(i)-media_vxM6)/dev_standard_vx(6), p_vxM6(i), w_vxM6(i)/dev_standard_vx(6)
  enddo
  close(4640)
@@ -732,11 +732,11 @@
  !----------------------------------------------
  !M=5
  
- allocate(p_vxM5(70), w_vxM5(70))
- call  pdf_coeff(5, 70, coeff_fvx, w_vxM5, p_vxM5, dev_standard_vx(5), media_vxM5) 
+ allocate(p_vxM5(26), w_vxM5(26))
+ call  pdf_coeff(5, 26, coeff_fvx, w_vxM5, p_vxM5, dev_standard_vx(5), media_vxM5) 
  
  open(unit=4540, status='unknown', file='pdf_vxM5.dat', recl=100000)
- do i=1,70
+ do i=1,26
       write(4540,*), (w_vxM5(i)-media_vxM5)/dev_standard_vx(5), p_vxM5(i), w_vxM5(i)/dev_standard_vx(5)
  enddo
  close(4540)
@@ -745,12 +745,12 @@
   !----------------------------------------------
  !M=4
   
- allocate(p_vxM4(80), w_vxM4(80))
+ allocate(p_vxM4(30), w_vxM4(30))
  
- call  pdf_coeff(4, 80, coeff_fvx, w_vxM4, p_vxM4, dev_standard_vx(4), media_vxM4) 
+ call  pdf_coeff(4, 30, coeff_fvx, w_vxM4, p_vxM4, dev_standard_vx(4), media_vxM4) 
 
  open(unit=44440, status='unknown', file='pdf_vxM4.dat', recl=100000)
- do i=1,80
+ do i=1,30
       write(44440,*), (w_vxM4(i)-media_vxM3)/dev_standard_vx(4), p_vxM4(i), w_vxM4(i)/dev_standard_vx(4)
  enddo
  close(44440)
@@ -759,12 +759,12 @@
  !----------------------------------------------
  !M=3
   
- allocate(p_vxM3(90), w_vxM3(90))
+ allocate(p_vxM3(50), w_vxM3(50))
 
- call  pdf_coeff(3, 90, coeff_fvx, w_vxM3, p_vxM3, dev_standard_vx(3), media_vxM3)
+ call  pdf_coeff(3, 50, coeff_fvx, w_vxM3, p_vxM3, dev_standard_vx(3), media_vxM3)
 
  open(unit=4340, status='unknown', file='pdf_vxM3.dat', recl=100000)
- do i=1,90
+ do i=1,50
       write(4340,*), (w_vxM3(i)- media_vxM3)/dev_standard_vx(3), p_vxM3(i), w_vxM3(i)/dev_standard_vx(3)
  enddo
  close(4340)
@@ -787,12 +787,12 @@
 !----------------------------------------------
  !M=1
   
- allocate(p_vxM1(150), w_vxM1(150))
+ allocate(p_vxM1(100), w_vxM1(100))
 
- call  pdf_coeff(1, 150, coeff_fvx, w_vxM1, p_vxM1, dev_standard_vx(1), media_vxM1)
+ call  pdf_coeff(1, 100, coeff_fvx, w_vxM1, p_vxM1, dev_standard_vx(1), media_vxM1)
 
  open(unit=4140, status='unknown', file='pdf_vxM1.dat', recl=100000)
- do i=1,150
+ do i=1,100
       write(4140,*), (w_vxM1(i)-media_vxM1)/dev_standard_vx(1), p_vxM1(i), w_vxM1(i)/dev_standard_vx(1)
  enddo
  close(4140)
