@@ -24,7 +24,7 @@
  double precision, dimension(2048, 2048,1) ::  psi_coer, psi_incoer, A_coer, A_incoer 
  double precision, dimension(2048, 2048,1) ::  coeff_fvxC, coeff_fvyC
  double precision, dimension(11) :: Evx_Coer, Evy_Coer, Etot_Coer, sigmaExC, sigmaEyC, Evx_Inc, Evy_Inc, Etot_Inc
- double precision, allocatable,  dimension(:, :,:) ::  coeff_fvxI, coeff_fvyI
+ double precision, allocatable,  dimension(:, :,:) ::  coeff_fvxI, coeff_fvyI, psi_CSoglia,  psi_ISoglia
 
  !VARIABILI PER I COEFF DI FOURIER 
  DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : , : ) :: u, r, psi
@@ -92,10 +92,11 @@
  double precision, allocatable, dimension(:) :: p_Sx, w_Sx
 
  !VARIABILI DIVISIONE PSI IN COER ED INCOER CON VX E SOGLIA 3 SIGMA
- DOUBLE COMPLEX, ALLOCATABLE, DIMENSION( : , : ) :: psicomplex_c, psicomplex_inc, vycomplex_c, vycomplex_inc
- DOUBLE COMPLEX, ALLOCATABLE, DIMENSION( : , : ) :: vxcomplex_c, vxcomplex_inc
  DOUBLE PRECISION,ALLOCATABLE, DIMENSION( : , : ) :: psi_c, psi_inc, vy_coer3s, vy_incoer3s, vx_coer3s, vx_incoer3s
 
+ !CORRELAZIONE J O
+ double precision ::  media_j, sigma_oj, dev_standard_j, dev_standard_o, correlazione_oj 
+ 
  !DEFINIZIONE PARAMETRI 
  Nx=2048
  Ny=Nx
@@ -967,9 +968,9 @@
  allocate(vx_coerP (2048,2048,1),  vx_incoerP (2048,2048,1) )
  allocate(vy_coerP (2048,2048,1),  vy_incoerP (2048,2048,1) )
 
- call Divisione_campo(coeff_fvx, dev_standard_vx, vx_coerP, vx_incoerP, EIvx, ECvx, kx, 3.d0 )
+ call Divisione_campo(coeff_fvx, dev_standard_vx, vx_coerP, vx_incoerP, EIvx, ECvx, kx, 3.d0, .false.)
  
- call Divisione_campo(coeff_fvy, dev_standard_vy, vy_coerP, vy_incoerP, EIvy, ECvy, ky, 3.d0)
+ call Divisione_campo(coeff_fvy, dev_standard_vy, vy_coerP, vy_incoerP, EIvy, ECvy, ky, 3.d0, .true.)
  
  open(unit=8834, status='UNKNOWN', file='spettro_velocitasigma.dat',recl=10000)
  
@@ -989,52 +990,10 @@
 
  !DIVISIONE DI PSI IN PARTE COERENTE E INCOERENTE CON LA SOGLIA DEI 3 SIGMA
  
- ALLOCATE(psicomplex_c(lx+1,ly), psicomplex_inc(lx+1,ly), psi_c(Nx,Ny), psi_inc(Nx,Ny))
- ALLOCATE(vycomplex_c(lx+1,ly), vycomplex_inc(lx+1,ly), vy_coer3s(Nx,Ny), vy_incoer3s(Nx,Ny))
- ALLOCATE(vxcomplex_c(lx+1,ly), vxcomplex_inc(lx+1,ly), vx_coer3s(Nx,Ny), vx_incoer3s(Nx,Ny))
-
-
- do j=1,Ny
-   do i=1,Nx
-     vy_coer3s(i,j)=vy_coerP(i,j,1)
-     vy_incoer3s(i,j)=vy_incoerP(i,j,1)
-     vx_coer3s(i,j)=vx_coerP(i,j,1)
-     vx_incoer3s(i,j)=vx_incoerP(i,j,1)
-    enddo
- enddo 
- vycomplex_c = DCMPLX(0.d0,0.d0)
- vycomplex_inc =DCMPLX(0.d0,0.d0)
- vxcomplex_c = DCMPLX(0.d0,0.d0)
- vxcomplex_inc =DCMPLX(0.d0,0.d0)
- psicomplex_c(i,j)= DCMPLX(0.d0,0.d0)
- psicomplex_inc(i,j) = DCMPLX(0.d0,0.d0)
-
- CALL realis(1,Nx,Ny,lx,ly,vycomplex_c,vy_coer3s)
- CALL realis(1,Nx,Ny,lx,ly,vycomplex_inc,vy_incoer3s)
- CALL realis(1,Nx,Ny,lx,ly,vxcomplex_c,vx_coer3s)
- CALL realis(1,Nx,Ny,lx,ly,vxcomplex_inc,vx_incoer3s)
-
- do j=1,ly
-   do i=1,lx+1
-      ikx(i)=DCMPLX(0.d0,k_x(i))
-      iky(j)=DCMPLX(0.d0,-k_y(j))
-      if((k_y(j).eq.0).and. (k_x(i).NE.0))then
-            psicomplex_c(i,j)= vycomplex_c(i,j)/ikx(i)
-            psicomplex_inc(i,j) = vycomplex_inc(i,j)/ ikx(i) 
-     
-       elseif((k_y(j).eq.0).and. (k_x(i).eq.0))then
-           psicomplex_c(i,j)= DCMPLX(0.d0,0.d0)
-           psicomplex_inc(i,j)= DCMPLX(0.d0,0.d0)
-       else
-           psicomplex_c(i,j)= vxcomplex_c(i,j)/iky(j)
-           psicomplex_inc(i,j) = vxcomplex_inc(i,j)/ iky(j) 
-      endif
-    enddo
- enddo 
-
- CALL realis(-1,Nx,Ny,lx,ly,  psicomplex_c, psi_c) 
- CALL realis(-1,Nx,Ny,lx,ly, psicomplex_inc, psi_inc) 
-
+ ALLOCATE( psi_c(Nx,Ny), psi_inc(Nx,Ny))
+ 
+ call divisione_psi_A(vy_coerP, vy_incoerP, vx_coerP, vx_incoerP, psi_c, psi_inc) 
+ 
  open(unit=58, status='UNKNOWN', file='psi_coer.dat',recl=10000)
  open(unit=85, status='UNKNOWN', file='psi_incoer.dat',recl=10000)
   do j= 1,Ny
@@ -1051,6 +1010,39 @@
  close(85)
 
  print*, 'prova sulla divisione di psi: ', maxval(abs(psi_v- psi_coer - psi_incoer))
+ print*, 'media psi_coer:', sum(psi_coer)/(Nx*Ny), 'media psi_incoer:', sum(psi_incoer)/(Nx*Ny)
+ print*, 'maxval psi_coer:', maxval(psi_coer), 'minval psi_coer:', minval(psi_coer)
+ print*, 'maxval psi_incoer:', maxval(psi_incoer), 'minval psi_incoer:', minval(psi_incoer)
+
+ open(unit=5899, status='UNKNOWN', file='psi_coersoglia.dat',recl=10000)
+ allocate(psi_CSoglia(Nx,Ny,1))
+ psi_CSoglia=0.d0
+ do j= 1,Ny
+  do i = 1,Nx 
+      if(dabs(psi_coer(i,j,1)) .ge. 0.1d0) then
+           psi_CSoglia(i,j,1)=1.d0
+           write(5899,*), i, j, psi_CSoglia(i,j,1) 
+       endif
+   enddo
+   !write(5899,*), ''
+ enddo
+ close(5899)
+      
+
+ open(unit=5998, status='UNKNOWN', file='psi_incoersoglia.dat',recl=10000)
+ allocate(psi_ISoglia(Nx,Ny,1))
+ psi_ISoglia=0.d0
+ do j= 1,Ny
+  do i = 1,Nx 
+      if(dabs(psi_incoer(i,j,1)) .ge. 0.1d0) then
+           psi_ISoglia(i,j,1)=1.d0
+           write(5998,*), i, j, psi_ISoglia(i,j,1) 
+       endif
+   enddo
+   !write(5899,*), ''
+ enddo
+ close(5998)
+      
  
  !DIVISIONE DEL POTENZIALE VETTORE IN PARTE COERENTE ED INCOERENTE 
  
@@ -1069,7 +1061,7 @@
  allocate(EI_A(11), EC_A(11), k_A(11), sigma_A(11), E_A(11)) 
 
  call spettro(coeff_fA,E_A, k_A, sigma_A)
- call Divisione_campo(coeff_fA,  sigma_A, A_coer, A_incoer, EI_A, EC_A, k_A, 3.d0)
+ call Divisione_campo(coeff_fA,  sigma_A, A_coer, A_incoer, EI_A, EC_A, k_A, 3.d0, .false.)
 
  ! call inverse(coeffcoer_A, A_coer)
 
@@ -1263,14 +1255,14 @@
  close(333)
  
 
- !USO DEI TRE SIGMA
+ !USO DEI TRE SIGMA !QUESTO E' SBAGLIATO
 
  allocate(coeff_lambda(2048,2048,1))
  allocate(EI_lambda(11), EC_lambda(11), k_lambda(11), sigma_lambda(11), E_lambda(11)) 
 
  call directhaar(lambda,coeff_lambda)
  call spettro(coeff_lambda,E_lambda, k_A, sigma_lambda)
- call Divisione_campo(coeff_lambda,  sigma_lambda, lambda_coer,lambda_incoer,EI_lambda,EC_lambda,k_lambda,3.d0)
+ call Divisione_campo(coeff_lambda,  sigma_lambda, lambda_coer,lambda_incoer,EI_lambda,EC_lambda,k_lambda,3.d0, .false.)
 
  open(unit=555, status='UNKNOWN', file='lambdacoer.dat',recl=10000)
  open(unit=566, status='UNKNOWN', file='lambdaincoer.dat',recl=10000)
@@ -1439,6 +1431,19 @@
  enddo
 
 
+
+ !CALCOLO CORRELAZIONE FRA OMEGA E J
+ media_j = sum(dj) / (Nx*Ny)
+ sigma_oj = sum(dj*o)/(Nx*Ny) - media_j * media_vort
+
+ dev_standard_j = dsqrt(sum((dj)**2.d0)/ (Nx*Ny) - media_j * media_j)
+ dev_standard_o = dsqrt(sum((o)**2.d0)/ (Nx*Ny) - media_vort * media_vort)
+
+ correlazione_oj = sigma_oj / (dev_standard_j* dev_standard_o)
+
+ open(unit=69400, status='unknown', file='correlazione.dat', recl=100000)
+ write(69400,*), 'correlazione tra vorticità e corrente:', correlazione_oj 
+ close(69400)
 
  end program mhd 
 
@@ -1754,7 +1759,7 @@
  end subroutine coeff_coerenti
 
 !----------------------------------------------------------------------------------------
- subroutine Divisione_campo(coeff_f,  sigma, fieldcoer, fieldinco, EI, EC, k, s )
+ subroutine Divisione_campo(coeff_f,  sigma, fieldcoer, fieldinco, EI, EC, k, s, B )
 !----------------------------------------------------------------------------------------
  
  use variabili 
@@ -1770,7 +1775,9 @@
  double precision, dimension(M) :: sigma 
  double precision, dimension(M) :: EI, EC, k, sigmaC, sigmaI
  double precision :: s
+ logical :: B
 
+ open(unit=7773, status='unknown', file='punti_coer_vy.dat', recl=100000)
  M=11
  prova=1.d0
  control=0
@@ -1784,9 +1791,10 @@
             q1=iq1/2;  q2=(iq1-q1*2) 
             n1=k1 + q1*Np + Ni(ip) -1
             n2=k2 + q2*Np + Ni(ip) -1
-            if ( dabs(coeff_f(n1,n2,1)) > s*sigma(ip) ) control(n1,n2,1)=1
-               
-            
+            if ( dabs(coeff_f(n1,n2,1)) > s*sigma(ip) ) then
+               control(n1,n2,1)=1
+               if (B.eqv. (.true.)) write(7773,*), n1, n2, 1, ip
+            endif           
           enddo
         enddo 
      enddo
@@ -1797,7 +1805,7 @@
       coeff_incoer(i,j,1)= coeff_f(i,j,1)*(1-control(i,j,1))
     enddo
  enddo
-
+ close(7773)
  
 
  !print*, 'massimo valore coeff coer', maxval(coeff_coer), 'minimo valore coeff coer', minval(coeff_coer)
@@ -1925,7 +1933,97 @@
  
  end subroutine pdf_coeff
 
+ !----------------------------------------------------------------------------------------------
+ subroutine divisione_psi_A(Fy_c, Fy_i, Fx_c, Fx_i, Field_c, Field_inc)
+ !------------------------------------------------------------------------------------------------
+ !CALCOLA LA STREAM FUNCTION (O IL POTENZIALE VETTORE) DIVISA IN PARTE COERENTE ED INCOERENTE  A 
+ !PARTIRE DAL CAMPO DI VELOCITA' (MAGNETICO) DIVISO USANDO LA SOGLIA DI SIGMA.
+ !
 
+ 
+ use variabili 
+ implicit none
+ 
+ integer :: lx, ly, i ,j, ii 
+ INTEGER*4, DIMENSION( Nx/2+1 ) :: k_x
+ INTEGER*4, DIMENSION(Ny) ::  k_y 
+ DOUBLE COMPLEX,  DIMENSION(Nx/2+1) :: ikx
+ DOUBLE COMPLEX,  DIMENSION(Ny) :: iky
+ DOUBLE COMPLEX, DIMENSION( Nx/2+1 , Ny ) :: Fieldcomplex_c, Fieldcomplex_inc, Fycomplex_c, Fycomplex_inc
+ DOUBLE COMPLEX, DIMENSION( Nx/2+1 , Ny ) :: Fxcomplex_c, Fxcomplex_inc
+ DOUBLE PRECISION, DIMENSION(Nx, Ny) :: Field_c, Field_inc, Fy_coer, Fy_incoer, Fx_coer, Fx_incoer
+ DOUBLE PRECISION, DIMENSION(Nx, Ny, 1) :: Fy_c, Fy_i, Fx_c, Fx_i
+
+ lx = Nx/2 !Punti nello spazio fisico
+ ly = Ny
+!~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  
+! K-vectors definition
+!           1 2 3 4 5  6  7  8     
+!      kx = 0,1,2..nx/2  
+!      ky = 0,1,2,3,4,-3,-2,-1    [For ny = 8]
+
+ 
+ k_x = 0
+ k_y = 0
+
+ DO ii = 1, ly
+    IF( ii <= (ly/2) )      k_y(ii) = ii - 1
+    IF( ii ==  ((ly/2)+1) ) k_y(ii) = (ly/2)
+    IF( ii > ((ly/2)+1) )   k_y(ii) = ii - ly - 1
+ END DO
+
+ DO ii = 1, lx + 1
+     k_x(ii) = ii - 1
+ END DO
+
+
+ do j=1,Ny
+   do i=1,Nx
+     Fy_coer(i,j)  =Fy_c(i,j,1)
+     Fy_incoer(i,j)=Fy_i(i,j,1)
+     Fx_coer(i,j)  =Fx_c(i,j,1)
+     Fx_incoer(i,j)=Fx_i(i,j,1)
+    enddo
+ enddo 
+
+ Fycomplex_c   = DCMPLX(0.d0,0.d0)
+ Fycomplex_inc = DCMPLX(0.d0,0.d0)
+ Fxcomplex_c   = DCMPLX(0.d0,0.d0)
+ Fxcomplex_inc = DCMPLX(0.d0,0.d0)
+
+ Fieldcomplex_c(i,j)   = DCMPLX(0.d0,0.d0)
+ Fieldcomplex_inc(i,j) = DCMPLX(0.d0,0.d0)
+
+ CALL realis(1,Nx,Ny,lx,ly,Fycomplex_c,Fy_coer)
+
+ CALL realis(1,Nx,Ny,lx,ly,Fycomplex_inc,Fy_incoer)
+
+ CALL realis(1,Nx,Ny,lx,ly,Fxcomplex_c,Fx_coer)
+
+ CALL realis(1,Nx,Ny,lx,ly,Fxcomplex_inc,Fx_incoer)
+
+ do j=1,ly
+   do i=1,lx+1
+      ikx(i)=DCMPLX(0.d0,k_x(i))
+      iky(j)=DCMPLX(0.d0,-k_y(j))
+      if((k_y(j).eq.0).and. (k_x(i).NE.0))then
+            Fieldcomplex_c(i,j)   = Fycomplex_c(i,j)   /ikx(i)
+            Fieldcomplex_inc(i,j) = Fycomplex_inc(i,j) /ikx(i) 
+     
+       elseif((k_y(j).eq.0).and. (k_x(i).eq.0))then
+           Fieldcomplex_c(i,j)  = DCMPLX(0.d0,0.d0)
+           Fieldcomplex_inc(i,j)= DCMPLX(0.d0,0.d0)
+       else
+           Fieldcomplex_c(i,j)   = Fxcomplex_c(i,j)   /iky(j)
+           Fieldcomplex_inc(i,j) = Fxcomplex_inc(i,j) /iky(j) 
+      endif
+    enddo
+ enddo 
+
+ CALL realis(-1,Nx,Ny,lx,ly, Fieldcomplex_c,   Field_c) 
+ CALL realis(-1,Nx,Ny,lx,ly, Fieldcomplex_inc, Field_inc) 
+
+ end subroutine divisione_psi_A
 
 
 
