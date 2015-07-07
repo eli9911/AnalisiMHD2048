@@ -13,14 +13,14 @@
  double precision, dimension(2048, 2048,1) ::  jinv_coer, coeffcoer_j, coeffincoer_j, jinv_incoer
  double precision, dimension(2048, 2048,1) ::  jinv_coer1, coeffcoer_j1, coeffincoer_j1, jinv_incoer1
  double precision, dimension(11) :: Evx, Evy, k, Etot, sigmaEx, sigmaEy, sigmaT, Eo, ko, sigma_o, Ej, kj, sigma_j, Ecoer_o, kco
- double precision, dimension(11) :: sig_coero, Eincoer_o, kinco, sig_incoero
+ double precision, dimension(11) :: sig_coero, Eincoer_o, kinco, sig_incoero, k_A
  integer, dimension(2048, 2048,1):: control_o, control_o1,  control_j, control_j1, control_A
- double precision :: epsilon_t, epsilon_t1, epsilon_j, epsilon_j1, epsilon_A
+ double precision :: epsilon_t, epsilon_t1, epsilon_j, epsilon_j1
  integer :: lx, ly, ii, jj 
  double precision :: media_vort, sigma_vort
  double precision, dimension(2048, 2048, 1) :: lambda, lambda_coer, lambda_incoer 
  double precision, dimension(11) :: sig_coerj, Eincoer_j, Ecoer_j, kinco_j, sig_incoerj, kco_j
- double precision, dimension(2048, 2048,1) :: coeff_fpsi, coeff_fA, coeffcoer_A, coeffincoer_A
+ double precision, dimension(2048, 2048,1) :: coeff_fpsi, coeff_fA
  double precision, dimension(2048, 2048,1) ::  psi_coer, psi_incoer, A_coer, A_incoer 
  double precision, dimension(2048, 2048,1) ::  coeff_fvxC, coeff_fvyC
  double precision, dimension(11) :: Evx_Coer, Evy_Coer, Etot_Coer, sigmaExC, sigmaEyC, Evx_Inc, Evy_Inc, Etot_Inc
@@ -41,9 +41,6 @@
  DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : , :, : ) :: vx_coer5S,  vx_incoer5S, vy_coer5S,  vy_incoer5S 
  DOUBLE PRECISION, ALLOCATABLE, DIMENSION( : ) :: ECvx_5S, ECvy_5S, EIvx_5S, EIvy_5S, ECoer_5S,  EIncoer_5S
 
-
- 
- 
  !PROVA
  integer, dimension(2048, 2048,1):: control_vx, control_vy
  double precision :: epsilon_vx, epsilon_vy 
@@ -63,20 +60,7 @@
  !
  integer :: Mmax, Mmin, nbins1, nbins2
  integer ::  t, Np
- double precision :: dev_standard_Sx, media_vyM2, media_vyM1, media_vyM3, media_vyM4, media_vyM5, media_vyM6, media_vyM7
- double precision :: media_vyM8, media_vyM9, media_vyM10, media_vyM11
-
- double precision :: media_vxM2, media_vxM1, media_vxM3, media_vxM4, media_vxM5, media_vxM6, media_vxM7
- double precision :: media_vxM8, media_vxM9, media_vxM10, media_vxM11
-
- double precision, allocatable, dimension(:) ::  dev_standard_vx, dev_standard_vy
- double precision, allocatable, dimension(:) ::  p_vxM9, w_vxM9,  p_vxM7, w_vxM7,  p_vxM6, w_vxM6
- double precision, allocatable, dimension(:) ::   p_vxM5, w_vxM5, p_vxM4, w_vxM4, p_vxM3, w_vxM3,  p_vxM1, w_vxM1
- double precision, allocatable, dimension(:) ::  p_vxM11, w_vxM11,  p_vxM10, w_vxM10, p_vxM2, w_vxM2, p_vxM8, w_vxM8
-
- double precision, allocatable, dimension(:) ::  p_vyM9, w_vyM9,  p_vyM7, w_vyM7,  p_vyM6, w_vyM6
- double precision, allocatable, dimension(:) ::   p_vyM5, w_vyM5, p_vyM4, w_vyM4, p_vyM3, w_vyM3,  p_vyM1, w_vyM1
- double precision, allocatable, dimension(:) ::  p_vyM11, w_vyM11,  p_vyM10, w_vyM10, p_vyM2, w_vyM2, p_vyM8, w_vyM8
+ double precision :: dev_standard_Sx
 
  !
  DOUBLE COMPLEX, ALLOCATABLE, DIMENSION( : , : ) :: term1_c, djx_c, djy_c,  term3_c
@@ -85,7 +69,6 @@
  
  !
  DOUBLE PRECISION, ALLOCATABLE, DIMENSION(:,:,:) :: phi
- double precision, allocatable, dimension(:) ::EI_A, EC_A, k_A, sigma_A, E_A 
  double precision, allocatable, dimension(:,:,:) :: coeff_lambda
  double precision, allocatable, dimension(:) :: EI_lambda, EC_lambda, k_lambda, sigma_lambda, E_lambda
  double precision, allocatable, dimension(:) :: EvxC_prova,  sigma_provaC
@@ -93,9 +76,20 @@
 
  !VARIABILI DIVISIONE PSI IN COER ED INCOER CON VX E SOGLIA 3 SIGMA
  DOUBLE PRECISION,ALLOCATABLE, DIMENSION( : , : ) :: psi_c, psi_inc, vy_coer3s, vy_incoer3s, vx_coer3s, vx_incoer3s
+ 
+  DOUBLE PRECISION,ALLOCATABLE, DIMENSION( : , : ) :: A_c, A_inc
 
  !CORRELAZIONE J O
  double precision ::  media_j, sigma_oj, dev_standard_j, dev_standard_o, correlazione_oj 
+ 
+ double precision, allocatable, dimension(:) :: dev_standard_bx, dev_standard_by
+ integer, allocatable, dimension(:) :: num_bins
+ double precision, allocatable, dimension(:,:,:) :: coeff_bx, coeff_by, bxinv, byinv
+ double precision, allocatable, dimension(:) ::  dev_standard_vx, dev_standard_vy
+
+ double precision, allocatable, dimension(:) :: EC_Bx, EC_By, EI_Bx, EI_By, ECoer_B,  EIncoer_B
+ double precision, allocatable, dimension(:,:, :) :: Bx_coer,  Bx_incoer, By_coer,  By_incoer
+
  
  !DEFINIZIONE PARAMETRI 
  Nx=2048
@@ -143,6 +137,10 @@
  !CALCOLO DEI COEFF WAVELET DEI CAMPI 
 
  call init_haar
+
+ allocate(coeff_bx(2048,20148,1), coeff_by(2048,20148,1))
+ allocate( bxinv(2048,20148,1), byinv(2048,20148,1))
+
  coeff_fvx = 0.d0
  coeff_fvy = 0.d0
  coeff_fo = 0.d0
@@ -150,6 +148,8 @@
  coeff_fpsi= 0.d0
  coeff_fA=0.d0
  sig_coero=0.d0
+ coeff_bx = 0.d0
+ coeff_by = 0.d0
 
  !COEFF vx
  call directhaar(vx,coeff_fvx)
@@ -162,6 +162,16 @@
  print*, maxval(dabs(vy-vyinv))
 
 
+ !COEFF bx
+ call directhaar(bx,coeff_bx)
+ call inverse(coeff_bx,bxinv)
+ print*, maxval(dabs(bx-bxinv))
+
+ !COEFF by
+ call directhaar(by,coeff_by)
+ call inverse(coeff_by,byinv)
+ print*, maxval(dabs(by-byinv))
+ 
  !COEFF VORTICITA' 
  call directhaar(o,coeff_fo)
  call inverse(coeff_fo,oinv)
@@ -642,323 +652,29 @@
  print*,'Errore sul calcolo di fourier del campo di velocità lungo x',  maxval(abs(vx_prova-vx))
  print*,'Errore sul calcolo di fourier del campo di velocità lungo y',  maxval(abs(vy_prova-vy))
 
- !PDF vx ALLE DIVERSE SCALE
-
- allocate(dev_standard_vx(M))
-
-!----------------------------------------------
- !M=11
-  
- allocate(p_vxM11(1), w_vxM11(1))
-
- call  pdf_coeff(11, 1, coeff_fvx, w_vxM11, p_vxM11, dev_standard_vx(11), media_vxM11)
-
- 
- open(unit=41140, status='unknown', file='pdf_vxM11.dat', recl=100000)
- write(41140,*),  w_vxM11(1)/dev_standard_vx(11), p_vxM11(1)
- close(41140)
-
- !----------------------------------------------
- !M=10
-  
- allocate(p_vxM10(2), w_vxM10(2))
-
- call  pdf_coeff(10, 2, coeff_fvx, w_vxM10, p_vxM10, dev_standard_vx(10), media_vxM10)
-
- open(unit=41040, status='unknown', file='pdf_vxM10.dat', recl=100000)
- do i=1,2
-      write(41040,*),  (w_vxM10(i)-media_vxM10)/dev_standard_vx(10), p_vxM10(i)
- enddo
- close(41040)
- 
-
- 
-
- !-----------------------------------------------
- ! M=8
-
- allocate(p_vxM8(10), w_vxM8(10))
-
- call  pdf_coeff(8, 10, coeff_fvx, w_vxM8, p_vxM8, dev_standard_vx(8), media_vxM8)
-
- open(unit=4444, status='unknown', file='pdf_vxM8.dat', recl=100000)
- do i=1,10
-      write(4444,*), (w_vxM8(i)-media_vxM8)/dev_standard_vx(8), p_vxM8(i),  w_vxM8(i)/dev_standard_vx(8)
- enddo
- close(4444)
-
- 
-
- !----------------------------------------------
- !M=9
- 
- allocate(p_vxM9(6), w_vxM9(6))
-
- call  pdf_coeff(9, 6, coeff_fvx, w_vxM9, p_vxM9, dev_standard_vx(9), media_vxM9) 
- 
- open(unit=4440, status='unknown', file='pdf_vxM9.dat', recl=100000)
- do i=1,6
-      write(4440,*), (w_vxM9(i)-media_vxM9)/dev_standard_vx(9), p_vxM9(i), w_vxM9(i)/dev_standard_vx(9)
- enddo
- close(4440)
-
-
- !----------------------------------------------
- !M=7
-  
- allocate(p_vxM7(10), w_vxM7(10))
- 
- call  pdf_coeff(7, 10, coeff_fvx, w_vxM7, p_vxM7, dev_standard_vx(7), media_vxM7) 
- 
- open(unit=4740, status='unknown', file='pdf_vxM7.dat', recl=100000)
- do i=1,10
-      write(4740,*), (w_vxM7(i)- media_vxM7)/dev_standard_vx(7), p_vxM7(i),  w_vxM7(i)/dev_standard_vx(7)
- enddo
- close(4740)
-
- !----------------------------------------------
- !M=6
-  
- allocate(p_vxM6(26), w_vxM6(26))
- 
- call  pdf_coeff(6, 26, coeff_fvx, w_vxM6, p_vxM6, dev_standard_vx(6), media_vxM6) 
- 
- open(unit=4640, status='unknown', file='pdf_vxM6.dat', recl=100000)
- do i=1,26
-      write(4640,*), (w_vxM6(i)-media_vxM6)/dev_standard_vx(6), p_vxM6(i), w_vxM6(i)/dev_standard_vx(6)
- enddo
- close(4640)
-
-
- !----------------------------------------------
- !M=5
- 
- allocate(p_vxM5(26), w_vxM5(26))
- call  pdf_coeff(5, 26, coeff_fvx, w_vxM5, p_vxM5, dev_standard_vx(5), media_vxM5) 
- 
- open(unit=4540, status='unknown', file='pdf_vxM5.dat', recl=100000)
- do i=1,26
-      write(4540,*), (w_vxM5(i)-media_vxM5)/dev_standard_vx(5), p_vxM5(i), w_vxM5(i)/dev_standard_vx(5)
- enddo
- close(4540)
-
-
-  !----------------------------------------------
- !M=4
-  
- allocate(p_vxM4(30), w_vxM4(30))
- 
- call  pdf_coeff(4, 30, coeff_fvx, w_vxM4, p_vxM4, dev_standard_vx(4), media_vxM4) 
-
- open(unit=44440, status='unknown', file='pdf_vxM4.dat', recl=100000)
- do i=1,30
-      write(44440,*), (w_vxM4(i)-media_vxM3)/dev_standard_vx(4), p_vxM4(i), w_vxM4(i)/dev_standard_vx(4)
- enddo
- close(44440)
-
-
- !----------------------------------------------
- !M=3
-  
- allocate(p_vxM3(50), w_vxM3(50))
-
- call  pdf_coeff(3, 50, coeff_fvx, w_vxM3, p_vxM3, dev_standard_vx(3), media_vxM3)
-
- open(unit=4340, status='unknown', file='pdf_vxM3.dat', recl=100000)
- do i=1,50
-      write(4340,*), (w_vxM3(i)- media_vxM3)/dev_standard_vx(3), p_vxM3(i), w_vxM3(i)/dev_standard_vx(3)
- enddo
- close(4340)
- 
-
- !--------------------------------------------------------------
- !M=2
-
- allocate(p_vxM2(100), w_vxM2(100))
-
- call  pdf_coeff(2, 100, coeff_fvx, w_vxM2, p_vxM2, dev_standard_vx(2), media_vxM2)
-
- open(unit=2222, status='unknown', file='pdf_vxM2.dat', recl=100000)
- do i=1,100
-     write(2222,*), (w_vxM2(i)-media_vxM2)/dev_standard_vx(2), p_vxM2(i),  w_vxM2(i)/dev_standard_vx(2)
- enddo
- close(2222)
-
-
-!----------------------------------------------
- !M=1
-  
- allocate(p_vxM1(100), w_vxM1(100))
-
- call  pdf_coeff(1, 100, coeff_fvx, w_vxM1, p_vxM1, dev_standard_vx(1), media_vxM1)
-
- open(unit=4140, status='unknown', file='pdf_vxM1.dat', recl=100000)
- do i=1,100
-      write(4140,*), (w_vxM1(i)-media_vxM1)/dev_standard_vx(1), p_vxM1(i), w_vxM1(i)/dev_standard_vx(1)
- enddo
- close(4140)
- 
-
- !PDF vy ALLE DIVERSE SCALE
-
- allocate(dev_standard_vy(M))
-
-!----------------------------------------------
- !M=11
-  
- allocate(p_vyM11(1), w_vyM11(1))
-
- call  pdf_coeff(11, 1, coeff_fvy, w_vyM11, p_vyM11, dev_standard_vy(11), media_vyM11)
- 
- open(unit=4114, status='unknown', file='pdf_vyM11.dat', recl=100000)
- write(4114,*), w_vyM11(1)/dev_standard_vy(11), p_vyM11(1)
- close(4114)
-
- !----------------------------------------------
- !M=10
-  
- allocate(p_vyM10(2), w_vyM10(2))
-
- call  pdf_coeff(10, 2, coeff_fvy, w_vyM10, p_vyM10, dev_standard_vy(10), media_vyM10)
-
- open(unit=4104, status='unknown', file='pdf_vyM10.dat', recl=100000)
- do i=1,2
-      write(4104,*), (w_vyM10(i)- media_vyM10)/dev_standard_vy(10), p_vyM10(i)
- enddo
- close(4104)
- 
-
- 
-
- !-----------------------------------------------
- ! M=8
-
- allocate(p_vyM8(30), w_vyM8(30))
-
- call  pdf_coeff(8, 30, coeff_fvy, w_vyM8, p_vyM8, dev_standard_vy(8), media_vyM8)
- 
- open(unit=444, status='unknown', file='pdf_vyM8.dat', recl=100000)
- do i=1,30
-      write(444,*), (w_vyM8(i)- media_vyM8)/dev_standard_vy(8), p_vyM8(i), w_vyM8(i)/dev_standard_vy(8)
- enddo
- close(444)
-
- 
-
- !----------------------------------------------
- !M=9
- 
- allocate(p_vyM9(6), w_vyM9(6))
-
- call  pdf_coeff(9, 6, coeff_fvy, w_vyM9, p_vyM9, dev_standard_vy(9), media_vyM9) 
- 
- open(unit=440, status='unknown', file='pdf_vyM9.dat', recl=100000)
- do i=1,6
-      write(440,*), (w_vyM9(i) - media_vyM9)/dev_standard_vy(9), p_vyM9(i), w_vyM9(i)/dev_standard_vy(9)
- enddo
- close(440)
-
-
- !----------------------------------------------
- !M=7
-  
- allocate(p_vyM7(40), w_vyM7(40))
- 
- call  pdf_coeff(7, 40, coeff_fvy, w_vyM7, p_vyM7, dev_standard_vy(7), media_vyM7) 
- 
- open(unit=740, status='unknown', file='pdf_vyM7.dat', recl=100000)
- do i=1,40
-      write(740,*), (w_vyM7(i)-media_vyM7)/dev_standard_vy(7), p_vyM7(i), w_vyM7(i)/dev_standard_vy(7)
- enddo
- close(740)
-
- !----------------------------------------------
- !M=6
-  
- allocate(p_vyM6(60), w_vyM6(60))
- 
- call  pdf_coeff(6, 60, coeff_fvy, w_vyM6, p_vyM6, dev_standard_vy(6), media_vyM6) 
- 
- open(unit=640, status='unknown', file='pdf_vyM6.dat', recl=100000)
- do i=1,60
-      write(640,*), (w_vyM6(i)-media_vyM6)/dev_standard_vy(6), p_vyM6(i), w_vyM6(i)/dev_standard_vy(6)
- enddo
- close(640)
-
-
- !----------------------------------------------
- !M=5
- 
- allocate(p_vyM5(70), w_vyM5(70))
- call  pdf_coeff(5, 70, coeff_fvy, w_vyM5, p_vyM5, dev_standard_vy(5), media_vyM5) 
-
- open(unit=540, status='unknown', file='pdf_vyM5.dat', recl=100000)
- do i=1,70
-      write(540,*), (w_vyM5(i)-media_vyM5)/dev_standard_vy(5), p_vyM5(i),  w_vyM5(i)/dev_standard_vy(5)
- enddo
- close(540)
-
-
-  !----------------------------------------------
- !M=4
-  
- allocate(p_vyM4(80), w_vyM4(80))
- 
- call  pdf_coeff(4, 80, coeff_fvy, w_vyM4, p_vyM4, dev_standard_vy(4), media_vyM4) 
-
- open(unit=444340, status='unknown', file='pdf_vyM4.dat', recl=100000)
- do i=1,80
-      write(444340,*), (w_vyM4(i)-media_vyM4)/dev_standard_vy(4), p_vyM4(i), w_vyM4(i)/dev_standard_vy(4)
- enddo
- close(444340)
-
-
- !----------------------------------------------
- !M=3
-  
- allocate(p_vyM3(90), w_vyM3(90))
-
- call  pdf_coeff(3, 90, coeff_fvy, w_vyM3, p_vyM3, dev_standard_vy(3), media_vyM3 )
-
- !dev_standard_vy(3)= dsqrt( sum((w_vyM3- sum(w_vyM3)/(90.d0))**2.d0) /(90.d0))
- 
- open(unit=43340, status='unknown', file='pdf_vyM3.dat', recl=100000)
- do i=1,90
-      write(43340,*), (w_vyM3(i)-media_vyM3)/dev_standard_vy(3), p_vyM3(i),  w_vyM3(i)/dev_standard_vy(3)
- enddo
- close(43340)
- 
-
- !--------------------------------------------------------------
- !M=2
-
- allocate(p_vyM2(100), w_vyM2(100))
-
- call  pdf_coeff(2, 100, coeff_fvy, w_vyM2, p_vyM2, dev_standard_vy(2), media_vyM2)
-
- !dev_standard_vy(2)= dsqrt( sum(p_vyM2*(w_vyM2- sum(w_vyM2)/(100.d0))**2.d0) /(100.d0))
- 
- open(unit=222, status='unknown', file='pdf_vyM2.dat', recl=100000)
- do i=1,100
-     write(222,*), (w_vyM2(i)-media_vyM2)/dev_standard_vy(2), p_vyM2(i), w_vyM2(i)/dev_standard_vy(2)
- enddo
- close(222)
-
-
-!----------------------------------------------
- !M=1
-  
- allocate(p_vyM1(150), w_vyM1(150))
-
- call  pdf_coeff(1, 150, coeff_fvy, w_vyM1, p_vyM1, dev_standard_vy(1), media_vyM1)
-
-!dev_standard_vy(1)= dsqrt( sum((p_vyM1*w_vyM1- sum(w_vyM1*p_vyM1))**2.d0) )
- 
- open(unit=41240, status='unknown', file='pdf_vyM1.dat', recl=100000)
- do i=1,150
-      write(41240,*), (w_vyM1(i)-media_vyM1)/dev_standard_vy(1), p_vyM1(i), w_vyM1(i)/dev_standard_vy(1)
- enddo
- close(41240)
+ !PDF vx, vy, bx, by ALLE DIVERSE SCALE
+
+ allocate(dev_standard_vx(11), num_bins(11), dev_standard_vy(11))
+ allocate(dev_standard_bx(11), dev_standard_by(11))
+
+ num_bins(1)= 100
+ num_bins(2)= 100
+ num_bins(3)= 80
+ num_bins(4)= 50
+ num_bins(5)= 40
+ num_bins(6)= 40
+ num_bins(7)= 40
+ num_bins(8)= 20
+ num_bins(9)= 6
+ num_bins(10)=2
+ num_bins(11)=1
+
+ do i=1,11
+    call calcolo_dev_standard(i, num_bins(i), coeff_fvx, dev_standard_vx(i), 'vx')
+    call calcolo_dev_standard(i, num_bins(i), coeff_fvy, dev_standard_vy(i), 'vy')
+    call calcolo_dev_standard(i, num_bins(i), coeff_bx, dev_standard_bx(i), 'bx')
+    call calcolo_dev_standard(i, num_bins(i), coeff_by, dev_standard_by(i), 'by')
+ enddo 
 
 
  !CALCOLO DI v COERENTE ED INCOERENTE CON LA SOGLIA 3*SIGMA
@@ -1043,53 +759,53 @@
  enddo
  close(5998)
       
+
+ !CALCOLO DI B COERENTE ED INCOERENTE CON LA SOGLIA 3*SIGMA
+
+ allocate( EC_Bx(11), EC_By(11), EI_Bx(11), EI_By(11))
+ allocate( ECoer_B(11),  EIncoer_B(11))
+ allocate(Bx_coer (2048,2048,1),  Bx_incoer (2048,2048,1) )
+ allocate(By_coer (2048,2048,1),  By_incoer (2048,2048,1) )
+
+ call Divisione_campo(coeff_bx, dev_standard_bx, bx_coer, bx_incoer, EI_bx, EC_bx, kx, 3.d0, .false.)
+ 
+ call Divisione_campo(coeff_by, dev_standard_by, by_coer, by_incoer, EI_by, EC_by, ky, 3.d0, .true.)
+ 
+ open(unit=2000, status='UNKNOWN', file='spettro_Bsigma.dat',recl=10000)
+ 
+ do i=1,M
+   ECoer_B(i)=EC_Bx(i)+EC_By(i)
+   EIncoer_B(i)=EI_Bx(i)+EI_By(i)
+   write(2000 ,*), kx(i), ECoer_B(i),  EIncoer_B(i)
+ enddo 
+ close(2000)
+ 
+ print*,'controllo bx',  maxval(abs(bx- bx_coer- bx_incoer))
+ print*, 'controllo by', maxval(abs(by- by_coer- by_incoer))
+
  
  !DIVISIONE DEL POTENZIALE VETTORE IN PARTE COERENTE ED INCOERENTE 
+
+ ALLOCATE( A_c(Nx,Ny), A_inc(Nx,Ny))
  
- epsilon_A = (2.d0 * sum(a*a)/(1.d0*Nx*Ny) *dlog(Nx*1.d0) )**0.5d0
-
- call coeff_coerenti(coeff_fA, a, control_A, epsilon_A)
-
- do j=1,Ny
-   do i =1,Nx
-      coeffcoer_A(i,j,1) = control_A(i,j,1)*coeff_fA(i,j,1)
-      coeffincoer_A(i,j,1)= coeff_fA(i,j,1)*(1-control_A(i,j,1))
-    enddo
- enddo
-
- !USO DELLA SOGLIA 3 SIGMA 
- allocate(EI_A(11), EC_A(11), k_A(11), sigma_A(11), E_A(11)) 
-
- call spettro(coeff_fA,E_A, k_A, sigma_A)
- call Divisione_campo(coeff_fA,  sigma_A, A_coer, A_incoer, EI_A, EC_A, k_A, 3.d0, .false.)
-
- ! call inverse(coeffcoer_A, A_coer)
-
- open(unit=87, status='UNKNOWN', file='A_coer.dat',recl=10000)
-  do j= 1,Ny
-   do i = 1,Nx 
-       write(87,*), i, j, A_coer(i,j,1)
-   enddo
-  write(87,*), ''
- enddo
- close(87)
-
- !call inverse(coeffincoer_A, A_incoer)
+ call divisione_psi_A(by_coer, by_incoer, bx_coer, bx_incoer, A_c, A_inc) 
  
+  open(unit=87, status='UNKNOWN', file='A_coer.dat',recl=10000) 
  open(unit=78, status='UNKNOWN', file='A_incoer.dat',recl=10000)
+
   do j= 1,Ny
    do i = 1,Nx 
+       A_coer(i,j,1)= A_c(i,j)
+       A_incoer(i,j,1)= A_inc(i,j)
+       write(87,*), i, j, A_coer(i,j,1)
        write(78,*), i, j, A_incoer(i,j,1)
    enddo
-  write(78,*), ''
+   write(87,*), ''
+   write(78,*), ''
  enddo
- close(78)
+ close(58)
+ close(85)
 
- open(unit=2031, status='UNKNOWN', file='spettroW_A.dat',recl=10000)
- do j=1,11
-     write(2031,*), k_A(j), EI_A(j), EC_A(j), E_A(j) 
- enddo
- close(2031)
 
  open(unit=8531, status='UNKNOWN', file='controllo_A.dat',recl=10000)
   do j= 1,Ny
@@ -1322,7 +1038,7 @@
      write(521,*), i, w(i), p(i)
  enddo
  close(521)
- 
+
 
  !CALCOLO DERIVATA TOTALE PER LA VORTICITA' E IL POTENZIALE VETTORE
 
@@ -2027,10 +1743,34 @@
 
 
 
+!-------------------------------------------------------------------------
+  subroutine calcolo_dev_standard(M, nbins, coeff_w, dev_standard, campo)
+!-------------------------------------------------------------------------
+
+ implicit none 
+ integer :: M, nbins, i, fid
+ double precision, dimension(nbins) :: p, w
+ double precision, dimension(2048, 2048, 1) :: coeff_w
+ double precision :: media 
+ double precision :: dev_standard
+ character(len=32) :: filename
+ character(len=5) :: char_i
+ character(len=2) ::  campo
 
 
+ call  pdf_coeff(M, nbins, coeff_w, w, p, dev_standard, media )
 
+ fid=1000+M
+ write(char_i, '(I5)'), M
+ filename= 'pdf_' // campo // 'M' //  trim(adjustl(char_i)) // '.dat'
+ open(fid, file=filename)
 
+ do i=1, nbins
+      write(fid,*), (w(i)-media)/dev_standard, p(i),  w(i)/dev_standard
+ enddo
+
+ close(fid)
+ end subroutine calcolo_dev_standard
 
 
 
