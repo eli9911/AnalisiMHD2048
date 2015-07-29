@@ -9,13 +9,13 @@
  double precision, dimension(2048, 2048,1) ::  a_b,  psi_v, bx_prova, by_prova, vx_prova, vy_prova, vxCoer, vyCoer, vxIncoer, vyInc
  double precision, dimension(2048, 2048,1) ::  coeff_fvx, coeff_fvy, vxinv, vyinv,coeff_fo, oinv, coeff_fj, jinv
  double precision, dimension(2048, 2048,1) ::  oinv_coer, coeffcoer_o, coeffincoer_o, oinv_incoer
- double precision, dimension(2048, 2048,1) ::  oinv_coer1, coeffcoer_o1, coeffincoer_o1, oinv_incoer1
+ 
  double precision, dimension(2048, 2048,1) ::  jinv_coer, coeffcoer_j, coeffincoer_j, jinv_incoer
  double precision, dimension(2048, 2048,1) ::  jinv_coer1, coeffcoer_j1, coeffincoer_j1, jinv_incoer1
  double precision, dimension(11) :: Evx, Evy, k, Etot, sigmaEx, sigmaEy, sigmaT, Eo, ko, sigma_o, Ej, kj, sigma_j, Ecoer_o, kco
  double precision, dimension(11) :: sig_coero, Eincoer_o, kinco, sig_incoero, k_A
- integer, dimension(2048, 2048,1):: control_o, control_o1,  control_j, control_j1, control_A
- double precision :: epsilon_t, epsilon_t1, epsilon_j, epsilon_j1
+ integer, dimension(2048, 2048,1):: control_o,  control_j, control_j1, control_A
+ double precision :: epsilon_t, epsilon_j, epsilon_j1
  integer :: lx, ly, ii, jj 
  double precision :: media_vort, sigma_vort
  double precision, dimension(2048, 2048, 1) :: lambda, lambda_coer, lambda_incoer 
@@ -43,11 +43,11 @@
 
  !PROVA
  integer, dimension(2048, 2048,1):: control_vx, control_vy
- double precision :: epsilon_vx, epsilon_vy 
- double precision, dimension(11) :: EvxC, EvyC,  EvxI, EvyI, kxc, kyc, kxi, kyi, sigmaxC, sigmayC, sigmaxI, sigmayI
- double precision, allocatable,  dimension(:, :,:) ::  coeffcoer_vx, coeffcoer_vy, coeffincoer_vx, coeffincoer_vy 
+ 
+ double precision, dimension(11) ::  kxi, kyi, sigmaxC, sigmayC, sigmaxI, sigmayI
+ 
  double precision, dimension(2048, 2048,1) :: vx_coerProva, vy_coerProva, vy_incoerProva, vx_incoerProva
- double precision, dimension(11) :: E_Coer, E_Incoer
+ 
 
  !
  double precision, allocatable,  dimension(:, :,:)  :: vx_coerP, vx_incoerP, vy_coerP, vy_incoerP 
@@ -69,9 +69,7 @@
  
  !
  DOUBLE PRECISION, ALLOCATABLE, DIMENSION(:,:,:) :: phi
- double precision, allocatable, dimension(:,:,:) :: coeff_lambda
- double precision, allocatable, dimension(:) :: EI_lambda, EC_lambda, k_lambda, sigma_lambda, E_lambda
- double precision, allocatable, dimension(:) :: EvxC_prova,  sigma_provaC
+
  double precision, allocatable, dimension(:) :: p_Sx, w_Sx
 
  !VARIABILI DIVISIONE PSI IN COER ED INCOER CON VX E SOGLIA 3 SIGMA
@@ -80,7 +78,7 @@
   DOUBLE PRECISION,ALLOCATABLE, DIMENSION( : , : ) :: A_c, A_inc
 
  !CORRELAZIONE J O
- double precision ::  media_j, sigma_oj, dev_standard_j, dev_standard_o, correlazione_oj 
+ double precision ::  correlazione_oj, corr_oj_c, corr_oj_i, correlazione_jA, corr_Aj_i, corr_Aj_c 
  
  double precision, allocatable, dimension(:) :: dev_standard_bx, dev_standard_by
  integer, allocatable, dimension(:) :: num_bins
@@ -89,6 +87,13 @@
 
  double precision, allocatable, dimension(:) :: EC_Bx, EC_By, EI_Bx, EI_By, ECoer_B,  EIncoer_B
  double precision, allocatable, dimension(:,:, :) :: Bx_coer,  Bx_incoer, By_coer,  By_incoer
+
+ double precision, allocatable, dimension(:,:, :) :: j_coer, j_inc
+ double precision, allocatable, dimension(:,:) :: j_c, j_i
+
+ double precision, allocatable, dimension(:,:) :: w_c, w_i
+ double precision, allocatable, dimension(:,:, :) ::w_coer, w_inc, phi_c, phi_i
+
 
  
  !DEFINIZIONE PARAMETRI 
@@ -132,8 +137,8 @@
 
  media_vort = sum(o)/(1.d0*Nx*Ny)
  sigma_vort = dsqrt(sum((o-media_vort)**2.d0)/(1.d0*Nx*Ny))
- print*, 'La media del campo di vorticità è: ', media_vort
- print*, 'Il sigma della vorticità è: ', sigma_vort
+ !print*, 'La media del campo di vorticità è: ', media_vort
+ !print*, 'Il sigma della vorticità è: ', sigma_vort
  !CALCOLO DEI COEFF WAVELET DEI CAMPI 
 
  call init_haar
@@ -154,33 +159,33 @@
  !COEFF vx
  call directhaar(vx,coeff_fvx)
  call inverse(coeff_fvx,vxinv)
- print*, maxval(dabs(vx-vxinv))
+ !print*, maxval(dabs(vx-vxinv))
  
  !COEFF vy
  call directhaar(vy,coeff_fvy)
  call inverse(coeff_fvy,vyinv)
- print*, maxval(dabs(vy-vyinv))
+ !print*, maxval(dabs(vy-vyinv))
 
 
  !COEFF bx
  call directhaar(bx,coeff_bx)
  call inverse(coeff_bx,bxinv)
- print*, maxval(dabs(bx-bxinv))
+ !print*, maxval(dabs(bx-bxinv))
 
  !COEFF by
  call directhaar(by,coeff_by)
  call inverse(coeff_by,byinv)
- print*, maxval(dabs(by-byinv))
+ !print*, maxval(dabs(by-byinv))
  
  !COEFF VORTICITA' 
  call directhaar(o,coeff_fo)
  call inverse(coeff_fo,oinv)
- print*, maxval(o-oinv)
+ !print*, maxval(o-oinv)
 
  !COEFF CORRENTE 
  call directhaar(dj,coeff_fj)
  call inverse(coeff_fj,jinv)
- print*, maxval(dabs(dj-jinv))
+ !print*, maxval(dabs(dj-jinv))
 
 
  !CALCOLO DELLO SPETTRO WAVELET PER LA VELOCITA'
@@ -232,21 +237,21 @@
  close(51)
  close(53)
 
- print*,'Teorema di Parseval per la velocità lungo x '
- print*,'Spazio reale:   ', sum(vx*vx)
- print*,'Spazio wavelet: ', sum(coeff_fvx*coeff_fvx)
+ !print*,'Teorema di Parseval per la velocità lungo x '
+ !print*,'Spazio reale:   ', sum(vx*vx)
+ !print*,'Spazio wavelet: ', sum(coeff_fvx*coeff_fvx)
 
- print*,'Teorema di Parseval per la velocità lungo y '
- print*,'Spazio reale:   ', sum(vy*vy)
- print*,'Spazio wavelet: ', sum(coeff_fvy*coeff_fvy)
+ !print*,'Teorema di Parseval per la velocità lungo y '
+ !print*,'Spazio reale:   ', sum(vy*vy)
+ !print*,'Spazio wavelet: ', sum(coeff_fvy*coeff_fvy)
 
- print*,'Teorema di Parseval per la vorticità '
- print*,'Spazio reale:   ', sum(o*o)
- print*,'Spazio wavelet: ', sum(coeff_fo*coeff_fo)
+ !print*,'Teorema di Parseval per la vorticità '
+ !print*,'Spazio reale:   ', sum(o*o)
+ !print*,'Spazio wavelet: ', sum(coeff_fo*coeff_fo)
 
- print*,'Teorema di Parseval per la corrente '
- print*,'Spazio reale:   ', sum(dj*dj)
- print*,'Spazio wavelet: ', sum(coeff_fj*coeff_fj)  
+ !print*,'Teorema di Parseval per la corrente '
+ !print*,'Spazio reale:   ', sum(dj*dj)
+ !print*,'Spazio wavelet: ', sum(coeff_fj*coeff_fj)  
 
  
  !CALCOLO COEFF INVERSI E CAMPO INVERSO PER LA VORTICITA'
@@ -294,37 +299,6 @@
  !print*, 'La media del campo di vorticità inc è: ', sum(oinv_incoer)/(1.d0*Nx*Ny)
  !print*, 'Il sigma della vorticità inc è: ', dsqrt(sum((oinv_incoer-(sum(oinv_incoer)/(1.d0*Nx*Ny)))**2.d0)/(1.d0*Nx*Ny))
  
- epsilon_t1=(2.d0* sum(oinv_incoer**2.d0)/(1.d0*Nx*Ny) * dlog(1.d0*Nx))**0.5d0
- 
- call coeff_coerenti(coeff_fo, o, control_o1, epsilon_t1)
-
- do j=1,Ny
-   do i =1,Nx
-      coeffcoer_o1(i,j,1) = control_o1(i,j,1)*coeff_fo(i,j,1)
-      coeffincoer_o1(i,j,1)= coeff_fo(i,j,1)*(1-control_o1(i,j,1))
-    enddo
- enddo
-
- call inverse(coeffcoer_o1, oinv_coer1)
-
-  open(unit=171, status='UNKNOWN', file='oinv_coer1.dat',recl=10000)
-  do j= 1,Ny
-   do i = 1,Nx 
-       write(171,*), i, j, oinv_coer1(i,j,1)
-   enddo
-  write(171,*), ''
- enddo
- close(171)
-
- call inverse(coeffincoer_o1, oinv_incoer1)
- 
- open(unit=711, status='UNKNOWN', file='oinv_incoer1.dat',recl=10000)
-  do j= 1,Ny
-   do i = 1,Nx 
-       write(711,*), i, j, oinv_incoer1(i,j,1)
-   enddo
-  write(711,*), ''
- enddo
  
  !CALCOLO COEFF INVERSI E CAMPO INVERSO PER LA CORRENTE 
  !DIVISIONE DEL CAMPO DI CORRENTE IN COERENTE E INCOERENTE 
@@ -597,7 +571,7 @@
  enddo
  close(600)
 
- print*, 'Errore sul calcolo di fourier del potenziale vettore ', maxval(dabs(a-a_b))
+ !print*, 'Errore sul calcolo di fourier del potenziale vettore ', maxval(dabs(a-a_b))
 
  !CALCOLO DEL CAMPO MAGNETICO A PARTIRE DAL POTENZIALE VETTORE 
 
@@ -623,8 +597,8 @@
     enddo
  enddo  
 
- print*,'Errore sul calcolo di fourier del campo magnetico lungo x',  maxval(abs(bx_prova-bx))
- print*,'Errore sul calcolo di fourier del campo magnetico lungo y',  maxval(abs(by_prova-by))
+ !print*,'Errore sul calcolo di fourier del campo magnetico lungo x',  maxval(abs(bx_prova-bx))
+ !print*,'Errore sul calcolo di fourier del campo magnetico lungo y',  maxval(abs(by_prova-by))
 
  !CALCOLO DEL CAMPO DI VELOCITA' A PARTIRE DALLA STREAM FUNCTION 
 
@@ -649,8 +623,8 @@
     enddo
  enddo  
 
- print*,'Errore sul calcolo di fourier del campo di velocità lungo x',  maxval(abs(vx_prova-vx))
- print*,'Errore sul calcolo di fourier del campo di velocità lungo y',  maxval(abs(vy_prova-vy))
+ !print*,'Errore sul calcolo di fourier del campo di velocità lungo x',  maxval(abs(vx_prova-vx))
+ !print*,'Errore sul calcolo di fourier del campo di velocità lungo y',  maxval(abs(vy_prova-vy))
 
  !PDF vx, vy, bx, by ALLE DIVERSE SCALE
 
@@ -697,8 +671,8 @@
  enddo 
  close(8834)
  
- print*,'controllo vx',  maxval(abs(vx- vx_coerP- vx_incoerP))
- print*, 'controllo vy', maxval(abs(vy- vy_coerP- vy_incoerP))
+ !print*,'controllo vx',  maxval(abs(vx- vx_coerP- vx_incoerP))
+ !print*, 'controllo vy', maxval(abs(vy- vy_coerP- vy_incoerP))
 
  !COEFF WAVELET STREAM FUNCTION E POTENZIALE VETTORE 
  call directhaar(psi_v,coeff_fpsi)
@@ -725,10 +699,10 @@
  close(58)
  close(85)
 
- print*, 'prova sulla divisione di psi: ', maxval(abs(psi_v- psi_coer - psi_incoer))
- print*, 'media psi_coer:', sum(psi_coer)/(Nx*Ny), 'media psi_incoer:', sum(psi_incoer)/(Nx*Ny)
- print*, 'maxval psi_coer:', maxval(psi_coer), 'minval psi_coer:', minval(psi_coer)
- print*, 'maxval psi_incoer:', maxval(psi_incoer), 'minval psi_incoer:', minval(psi_incoer)
+ !print*, 'prova sulla divisione di psi: ', maxval(abs(psi_v- psi_coer - psi_incoer))
+ !print*, 'media psi_coer:', sum(psi_coer)/(Nx*Ny), 'media psi_incoer:', sum(psi_incoer)/(Nx*Ny)
+ !print*, 'maxval psi_coer:', maxval(psi_coer), 'minval psi_coer:', minval(psi_coer)
+ !print*, 'maxval psi_incoer:', maxval(psi_incoer), 'minval psi_incoer:', minval(psi_incoer)
 
  open(unit=5899, status='UNKNOWN', file='psi_coersoglia.dat',recl=10000)
  allocate(psi_CSoglia(Nx,Ny,1))
@@ -760,6 +734,30 @@
  close(5998)
       
 
+ !CALCOLO DELLA VORTICITA' COER ED INCOER USANDO V CON LA SOGLIA 3 SIGMA 
+
+ allocate(w_c(Nx,Ny), w_i(Nx,Ny))
+ allocate(w_coer(Nx,Ny,1), w_inc(Nx,Ny,1))
+
+ call divisione_omega_j(vy_coerP, vy_incoerP, vx_coerP, vx_incoerP, w_c, w_i)
+
+ open(unit=7117, status='UNKNOWN', file='w_coer.dat',recl=10000) 
+ open(unit=8118, status='UNKNOWN', file='w_incoer.dat',recl=10000)
+
+  do j= 1,Ny
+   do i = 1,Nx 
+       w_coer(i,j,1)= w_c(i,j)
+       w_inc(i,j,1)= w_i(i,j)
+       write(7117,*), i, j, w_coer(i,j,1)
+       write(8118,*), i, j, w_inc(i,j,1)
+   enddo
+   write(7117,*), ''
+   write(8118,*), ''
+ enddo
+ close(8118)
+ close(7117)
+
+
  !CALCOLO DI B COERENTE ED INCOERENTE CON LA SOGLIA 3*SIGMA
 
  allocate( EC_Bx(11), EC_By(11), EI_Bx(11), EI_By(11))
@@ -784,13 +782,13 @@
  print*, 'controllo by', maxval(abs(by- by_coer- by_incoer))
 
  
- !DIVISIONE DEL POTENZIALE VETTORE IN PARTE COERENTE ED INCOERENTE 
+ !DIVISIONE DEL POTENZIALE VETTORE IN PARTE COERENTE ED INCOERENTE USANDO BX E BY DIVISI CON LA SOGLIA 3 SIGMA 
 
  ALLOCATE( A_c(Nx,Ny), A_inc(Nx,Ny))
  
  call divisione_psi_A(by_coer, by_incoer, bx_coer, bx_incoer, A_c, A_inc) 
  
-  open(unit=87, status='UNKNOWN', file='A_coer.dat',recl=10000) 
+ open(unit=87, status='UNKNOWN', file='A_coer.dat',recl=10000) 
  open(unit=78, status='UNKNOWN', file='A_incoer.dat',recl=10000)
 
   do j= 1,Ny
@@ -803,8 +801,8 @@
    write(87,*), ''
    write(78,*), ''
  enddo
- close(58)
- close(85)
+ close(78)
+ close(87)
 
 
  open(unit=8531, status='UNKNOWN', file='controllo_A.dat',recl=10000)
@@ -816,7 +814,35 @@
  enddo
  close(8531)
 
+ !CALCOLO DI J COER ED INCOER USANDO B CON LA SOGLIA 3 SIGMA 
+
+ allocate(j_c(Nx,Ny), j_i(Nx,Ny))
+ allocate(j_coer(Nx,Ny,1), j_inc(Nx,Ny,1))
+
+ call divisione_omega_j(by_coer, by_incoer, bx_coer, bx_incoer, j_c, j_i)
+
+ open(unit=8117, status='UNKNOWN', file='j_coer.dat',recl=10000) 
+ open(unit=7118, status='UNKNOWN', file='j_incoer.dat',recl=10000)
+
+  do j= 1,Ny
+   do i = 1,Nx 
+       j_coer(i,j,1)= j_c(i,j)
+       j_inc(i,j,1)= j_i(i,j)
+       write(8117,*), i, j, j_coer(i,j,1)
+       write(7118,*), i, j, j_inc(i,j,1)
+   enddo
+   write(8117,*), ''
+   write(7118,*), ''
+ enddo
+ close(7118)
+ close(8117)
+
+
+
+
  !CALCOLO DELLA VELOCITA' COERENTE ED INCOERENTE MEDIANTE PSI 
+ !QUI PSI DIVISO E' QUELLO OTTENUTO PRIMA DALLA DIVISIONE CON V E LA SOGLIA DI SIGMA 
+ !DOVEREBBE ESSERE UN CONTROLLO
 
  ALLOCATE( psiCoer_c (lx+1,ly) )
  psiCoer_c = DCMPLX(0.d0,0.d0)
@@ -873,7 +899,7 @@
  !CALCOLO DELLO SPETTRO WAVELET PER LA VELOCITA' COERENTE ED INCOERENTE 
 
  allocate(coeff_fvxI(2048,2048,1), coeff_fvyI(2048,2048,1))
- allocate(EvxC_prova(11),  sigma_provaC(11) )
+ 
  k=0.d0
  call directhaar(vxCoer,coeff_fvxC)
  call directhaar(vyCoer,coeff_fvyC)
@@ -884,7 +910,7 @@
  call spettro(coeff_fvyC,Evy_Coer,k, sigmaEyC)
  call spettro(coeff_fvxI,Evx_Inc,k, sigmaExC)
  call spettro(coeff_fvyI,Evy_Inc,k, sigmaEyC)
- call spettro(coeff_fvxC+coeff_fvyC, EvxC_prova, k, sigma_provaC)
+
 
  open(unit=991, status='UNKNOWN', file='spettro_velocitaCoerInc.dat',recl=10000)
  
@@ -892,105 +918,33 @@
    Etot_Coer(i)=Evx_Coer(i)+Evy_Coer(i)
    Etot_Inc(i)=Evx_Inc(i)+Evy_Inc(i)
    !sigmaT(i)= sigmaEx(i)+ sigmaEx(i)
-   write(991 ,*), k(i), Etot_Coer(i), Etot_Inc(i),  EvxC_prova(i), Etot(i)
+   write(991 ,*), k(i), Etot_Coer(i), Etot_Inc(i), Etot(i)
  enddo 
  close(991)
  
+
  
 
- !PROVA PER CALCOLARE LA VELOCITA' COERENTE ED INCOERENTE IN MODO DIRETTO
-
- allocate(coeffcoer_vx(2048,2048,1), coeffcoer_vy(2048,2048,1), coeffincoer_vx(2048,2048,1), coeffincoer_vy(2048,2048,1))
-
- epsilon_vx = (2.d0 * sum(vx**2.d0)/(1.d0*Nx*Ny) *dlog(Nx*1.d0) )**0.5d0
- epsilon_vy = (2.d0 * sum(vy**2.d0)/(1.d0*Nx*Ny) *dlog(Nx*1.d0) )**0.5d0
-
- call coeff_coerenti(coeff_fvx, vx, control_vx, epsilon_vx)
-
- call coeff_coerenti(coeff_fvy, vy, control_vy, epsilon_vy)
-
- do j=1,Ny
-   do i =1,Nx
-      coeffcoer_vx(i,j,1) = control_vx(i,j,1)*coeff_fvx(i,j,1)
-      coeffincoer_vx(i,j,1)= coeff_fvx(i,j,1)*(1-control_vx(i,j,1))
-
-      coeffcoer_vy(i,j,1) = control_vy(i,j,1)*coeff_fvy(i,j,1)
-      coeffincoer_vy(i,j,1)= coeff_fvy(i,j,1)*(1-control_vy(i,j,1))
-    enddo
- enddo
-
- call inverse(coeffcoer_vx, vx_coerProva)
- call inverse(coeffcoer_vy, vy_coerProva)
-
-
-  call inverse(coeffincoer_vx, vx_incoerProva)
-  call inverse(coeffincoer_vy, vy_incoerProva)
- 
- 
- 
-  call spettro(coeffcoer_vx,EvxC, k, sigmaxC)
-  call spettro(coeffcoer_vy,EvyC, k, sigmayC)
-
-  call spettro(coeffincoer_vx,EvxI, kxi, sigmaxI)
-  call spettro(coeffincoer_vy,EvyI, kyi, sigmayI)
-
- open(unit=883, status='UNKNOWN', file='spettro_velocitaProva.dat',recl=10000)
- 
- do i=1,M
-   E_Coer(i)=EvxC(i)+EvyC(i)
-   E_InCoer(i)=EvxI(i)+EvyI(i)
-   sigmaT(i)= sigmaEx(i)+ sigmaEx(i)
-   write(883 ,*), k(i), E_Coer(i), kyi(i), E_InCoer(i)
- enddo 
- close(883)
-
-
- !CONTROLLO SULLE PARTI COERENTI E INCOERENTI DELLA VELOCITA'
-
- open(unit=445, status='UNKNOWN', file='confronto_vxC.dat', recl=10000)
-
- do j=1,Ny
-   do i=1,Nx
-     write(445,*), dabs(coeff_fvxc(i,j,1)-coeffcoer_vx(i,j,1)), dabs(coeff_fvyc(i,j,1)-coeffcoer_vy(i,j,1))
-    enddo
- enddo
- close(445)
- 
-
- !CALCOLO DI LAMBDA E DELLA  PARTE COERENTE E INCOERENTE 
-
+ !CALCOLO DI LAMBDA 
+ !CALCOLO DI LAMBDA COER ED INCOER CON LA SOGLIA DEI 3 SIGMA SU V
  open(unit=333, status='UNKNOWN', file='lambda.dat',recl=10000)
-
- do j=1,Ny
-   do i= 1,Nx
-      lambda(i,j,1)= o(i,j,1)/dj(i,j,1)
-      write(333,*), i, j, lambda(i,j,1)
-    enddo
-   write(333,*), ''
- enddo 
- close(333)
- 
-
- !USO DEI TRE SIGMA !QUESTO E' SBAGLIATO
-
- allocate(coeff_lambda(2048,2048,1))
- allocate(EI_lambda(11), EC_lambda(11), k_lambda(11), sigma_lambda(11), E_lambda(11)) 
-
- call directhaar(lambda,coeff_lambda)
- call spettro(coeff_lambda,E_lambda, k_A, sigma_lambda)
- call Divisione_campo(coeff_lambda,  sigma_lambda, lambda_coer,lambda_incoer,EI_lambda,EC_lambda,k_lambda,3.d0, .false.)
-
  open(unit=555, status='UNKNOWN', file='lambdacoer.dat',recl=10000)
  open(unit=566, status='UNKNOWN', file='lambdaincoer.dat',recl=10000)
 
  do j=1,Ny
    do i= 1,Nx
-      write(555,*), i, j, lambda_coer(i,j,1)
-      write(566,*), i, j, lambda_incoer(i,j,1)
+      lambda(i,j,1)= o(i,j,1)/dj(i,j,1)
+      lambda_coer(i,j,1)= w_coer(i,j,1)/j_coer(i,j,1)
+      lambda_incoer(i,j,1)= w_inc(i,j,1)/j_inc(i,j,1) 
+     write(333,*), i, j, lambda(i,j,1)
+     write(555,*), i, j, lambda_coer(i,j,1)
+     write(566,*), i, j, lambda_incoer(i,j,1)
     enddo
+   write(333,*), ''
    write(555,*), ''
    write(566,*), ''
  enddo 
+ close(333)
  close(555)
  close(566)
 
@@ -1136,29 +1090,45 @@
  allocate(phi(Nx,Nx,1))
  
  phi=0.d0
- 
+ allocate(phi_c(Nx,Ny,1), phi_i(Nx,Ny,1))
+
  open(unit=6900, status='unknown', file='phi.dat', recl=100000)
+ open(unit=69110, status='unknown', file='phicoer.dat', recl=100000)
+ open(unit=69220, status='unknown', file='phiinc.dat', recl=100000)
  do j=1,Nx
    do i =1, Nx
-     if(a(i,j,1) .NE. 0.d0 ) phi(i,j,1)=  0.5d0*(lambda(i,j,1)*o(i,j,1)- dj(i,j,1) )/ a(i,j,1)
-     write(6900,*), i, j, phi(i,j,1)
+     if(a(i,j,1) .NE. 0.d0 ) then
+      phi(i,j,1)=  0.5d0*(lambda(i,j,1)*o(i,j,1)- dj(i,j,1) )/ a(i,j,1)
+      phi_c(i,j,1)=0.5d0*(lambda_coer(i,j,1)*w_coer(i,j,1)- j_coer(i,j,1) )/A_coer(i,j,1)
+      phi_i(i,j,1)=0.5d0*(lambda_incoer(i,j,1)*w_inc(i,j,1)- j_inc(i,j,1) )/A_incoer(i,j,1)
+    endif 
+    write(6900,*), i, j, phi(i,j,1)
+    write(69110,*), i, j, phi_c(i,j,1)
+    write(69220,*), i, j, phi_i(i,j,1)
     enddo
     write(6900,*), ''
+    write(69110,*), ''
+    write(69220,*), ''
  enddo
-
-
+ close(6900)
+ close(69110)
+ close(69220)
 
  !CALCOLO CORRELAZIONE FRA OMEGA E J
- media_j = sum(dj) / (Nx*Ny)
- sigma_oj = sum(dj*o)/(Nx*Ny) - media_j * media_vort
-
- dev_standard_j = dsqrt(sum((dj)**2.d0)/ (Nx*Ny) - media_j * media_j)
- dev_standard_o = dsqrt(sum((o)**2.d0)/ (Nx*Ny) - media_vort * media_vort)
-
- correlazione_oj = sigma_oj / (dev_standard_j* dev_standard_o)
+ call correlazione(dj, o, correlazione_oj)
+ call correlazione(dj, a, correlazione_jA)
+ call correlazione(j_coer, w_coer, corr_oj_c)
+ call correlazione(j_inc, w_inc, corr_oj_i)
+ call correlazione(j_inc, A_incoer, corr_Aj_i)
+ call correlazione(j_coer, A_coer, corr_Aj_c)
 
  open(unit=69400, status='unknown', file='correlazione.dat', recl=100000)
  write(69400,*), 'correlazione tra vorticità e corrente:', correlazione_oj 
+ write(69400,*), 'correlazione tra vorticità e corrente coerente:', corr_oj_c 
+ write(69400,*), 'correlazione tra vorticità e corrente incoerente:', corr_oj_i 
+ write(69400,*), 'correlazione tra potenziale vettore e corrente:', correlazione_jA 
+ write(69400,*), 'correlazione tra potenziale vettore e corrente coer:', corr_Aj_c 
+ write(69400,*), 'correlazione tra potenziale vettore e corrente incoer:', corr_Aj_i 
  close(69400)
 
  end program mhd 
@@ -1645,7 +1615,7 @@
  close(52541)
 
  call pdfeli(coeff_M, Np*Np*3 , nbins ,maxval(coeff_M), minval(coeff_M), w_Mm, p_M)
- print*, 'area', M_s, ':', sum(p_M)
+ !print*, 'area', M_s, ':', sum(p_M)
  
  end subroutine pdf_coeff
 
@@ -1771,6 +1741,113 @@
 
  close(fid)
  end subroutine calcolo_dev_standard
+
+!----------------------------------------------------------------------------------------------
+ subroutine divisione_omega_j(Fy_c, Fy_i, Fx_c, Fx_i, Field_c, Field_inc)
+ !------------------------------------------------------------------------------------------------
+ !CALCOLA LA VORICITA' (O LA CORRENTE) DIVISA IN PARTE COERENTE ED INCOERENTE  A 
+ !PARTIRE DAL CAMPO DI VELOCITA' (MAGNETICO) DIVISO USANDO LA SOGLIA DI SIGMA.
+ !
+
+ use variabili 
+ implicit none
+ 
+ integer :: lx, ly, i ,j, ii 
+ INTEGER*4, DIMENSION( Nx/2+1 ) :: k_x
+ INTEGER*4, DIMENSION(Ny) ::  k_y 
+ DOUBLE COMPLEX,  DIMENSION(Nx/2+1) :: ikx
+ DOUBLE COMPLEX,  DIMENSION(Ny) :: iky
+ DOUBLE COMPLEX, DIMENSION( Nx/2+1 , Ny ) :: Fieldcomplex_c, Fieldcomplex_inc, Fycomplex_c, Fycomplex_inc
+ DOUBLE COMPLEX, DIMENSION( Nx/2+1 , Ny ) :: Fxcomplex_c, Fxcomplex_inc
+ DOUBLE PRECISION, DIMENSION(Nx, Ny) :: Field_c, Field_inc, Fy_coer, Fy_incoer, Fx_coer, Fx_incoer
+ DOUBLE PRECISION, DIMENSION(Nx, Ny, 1) :: Fy_c, Fy_i, Fx_c, Fx_i
+
+ lx = Nx/2 !Punti nello spazio fisico
+ ly = Ny
+!~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  ~  
+! K-vectors definition
+!           1 2 3 4 5  6  7  8     
+!      kx = 0,1,2..nx/2  
+!      ky = 0,1,2,3,4,-3,-2,-1    [For ny = 8]
+
+ 
+ k_x = 0
+ k_y = 0
+
+ DO ii = 1, ly
+    IF( ii <= (ly/2) )      k_y(ii) = ii - 1
+    IF( ii ==  ((ly/2)+1) ) k_y(ii) = (ly/2)
+    IF( ii > ((ly/2)+1) )   k_y(ii) = ii - ly - 1
+ END DO
+
+ DO ii = 1, lx + 1
+     k_x(ii) = ii - 1
+ END DO
+
+
+ do j=1,Ny
+   do i=1,Nx
+     Fy_coer(i,j)  =Fy_c(i,j,1)
+     Fy_incoer(i,j)=Fy_i(i,j,1)
+     Fx_coer(i,j)  =Fx_c(i,j,1)
+     Fx_incoer(i,j)=Fx_i(i,j,1)
+    enddo
+ enddo 
+
+ Fycomplex_c   = DCMPLX(0.d0,0.d0)
+ Fycomplex_inc = DCMPLX(0.d0,0.d0)
+ Fxcomplex_c   = DCMPLX(0.d0,0.d0)
+ Fxcomplex_inc = DCMPLX(0.d0,0.d0)
+
+ Fieldcomplex_c(i,j)   = DCMPLX(0.d0,0.d0)
+ Fieldcomplex_inc(i,j) = DCMPLX(0.d0,0.d0)
+
+ CALL realis(1,Nx,Ny,lx,ly,Fycomplex_c,Fy_coer)
+
+ CALL realis(1,Nx,Ny,lx,ly,Fycomplex_inc,Fy_incoer)
+
+ CALL realis(1,Nx,Ny,lx,ly,Fxcomplex_c,Fx_coer)
+
+ CALL realis(1,Nx,Ny,lx,ly,Fxcomplex_inc,Fx_incoer)
+
+ do j=1,ly
+   do i=1,lx+1
+      ikx(i)=DCMPLX(0.d0,k_x(i))
+      iky(j)=DCMPLX(0.d0,-k_y(j))
+      Fieldcomplex_c(i,j)   = ikx(i)*Fycomplex_c(i,j)- iky(j)*Fxcomplex_c(i,j)  
+      Fieldcomplex_inc(i,j) = ikx(i)*Fycomplex_inc(i,j)- iky(j)*Fxcomplex_inc(i,j)    
+
+   enddo
+ enddo 
+
+ CALL realis(-1,Nx,Ny,lx,ly, Fieldcomplex_c,   Field_c) 
+ CALL realis(-1,Nx,Ny,lx,ly, Fieldcomplex_inc, Field_inc) 
+
+ end subroutine divisione_omega_j
+
+
+!--------------------------------------------------------------
+ subroutine correlazione(field1, field2, corr)
+!--------------------------------------------------------------
+
+  use variabili 
+ implicit none
+ 
+ double precision :: media1, media2, sigma, dev_standard1, dev_standard2, corr
+ double precision, dimension(Nx,Ny) :: field1, field2
+ 
+  
+ media1= sum(field1) / (Nx*Ny)
+ media2= sum(field2) / (Nx*Ny)
+ sigma = sum((field1-media1)*(field2-media2))
+
+ dev_standard1 = dsqrt(sum((field1-media1)**2.d0))
+ dev_standard2 = dsqrt(sum((field2-media2)**2.d0))
+
+ corr = sigma / (dev_standard1* dev_standard2)
+ 
+ end subroutine correlazione
+
 
 
 
